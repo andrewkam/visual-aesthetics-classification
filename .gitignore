@@ -1,0 +1,6 @@
+config.json
+
+*.scssc
+.DS_Store
+
+images/
