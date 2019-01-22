@@ -1,5 +1,6 @@
 config.json
 
+import*.txt
 *.scssc
 .DS_Store
 

@@ -31,7 +31,7 @@ def getChart(genre):
 
         artists.append(artist_name)
 
-    return artists[:1]
+    return artists
 
 
 def getImageUrls(artists):
@@ -65,6 +65,10 @@ def getImages(genre, artists):
               f'{artist_name}')
 
         artist_name_dir = artist_name.replace(' ', '_').lower()
+        artist_name_dir = artist_name_dir.replace('/', '_')
+
+        if 'soundtrack' in artist_name_dir:
+            continue
 
         r = requests.get(url_image_list)
         page_source = r.content
