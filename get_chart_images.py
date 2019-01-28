@@ -49,7 +49,7 @@ def getImageUrls(artists):
 
 def getImages(genre, artists):
     urls = getImageUrls(artists)
-    url_base = 'https://lastfm-img2.akamaized.net/i/u/770x0/'
+    url_base = 'https://lastfm-img2.akamaized.net/i/u/avatar300s/'
 
     image_dir = './images/' + genre + '/'
     if not os.path.exists(image_dir):
@@ -80,7 +80,7 @@ def getImages(genre, artists):
             os.mkdir(artist_image_dir)
 
         for i, path in enumerate(results):
-            url_image = url_base + path[49:] + '.jpeg#' + path[49:]
+            url_image = url_base + path[49:]  # + '.jpeg#' + path[49:]
             image_filename = '%s/%s-%02d.jpeg' % (artist_image_dir,
                                                   artist_name_dir,
                                                   i+1)

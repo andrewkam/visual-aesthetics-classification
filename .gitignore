@@ -1,7 +1,10 @@
 config.json
+.DS_Store
 
+*.sublime-project
+*.sublime-workspace
 import*.txt
 *.scssc
-.DS_Store
+*.pyc
 
 images/
