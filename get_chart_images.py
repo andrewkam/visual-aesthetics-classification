@@ -98,9 +98,18 @@ def getImages(genre, artists):
 
 
 def main():
-    genre = sys.argv[1]
+    arg_count = len(sys.argv)
 
-    artists = getChart(genre)  # ie. 'pop-songs'
+    if arg_count == 2:
+        genre = sys.argv[1]
+        artists = getChart(genre)  # ie. 'pop-songs'
+    elif arg_count == 3:
+        genre = sys.argv[1]
+        artists = [sys.argv[2]]
+    else:
+        print('Usage: get_chart_images chart [artist]')
+        exit()
+
     getImages(genre, artists)
 
 

@@ -34,6 +34,7 @@ def eval_artist(service, chart, artist):
                                      "{ \"index\": {\"_index\": \"images\", \"_type\": \"img\" } }\n "
                                      "{ \"uri\": \"{{uri}}\", "
                                      "{{#classes}} "
+                                     "\"chart\": \"" + chart + "\", "
                                      "\"category\": \"{{cat}}\", "
                                      "\"score\":{{prob}} } "
                                      "{{/classes}}\n "
