@@ -2,7 +2,7 @@ import numpy as np
 import elasticsearch
 import elasticsearch_dsl
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.model_selection import StratifiedKFold, cross_val_score, cross_validate
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
@@ -63,15 +63,53 @@ def tokenize(x_cat, x_score):
     return x_train.toarray()
 
 
+def create_cf(cf_name):
+
+    if cf_name == 'naive_bayes':
+        cf = GaussianNB()
+    elif cf_name == 'svm':
+        cf = LinearSVC()
+        cf.set_params(penalty='l2',
+                      loss='hinge',
+                      dual=True,
+                      C=1,
+                      max_iter=100000)
+    else:
+        exit()
+
+    return cf
+
+
+def predict(cf, x_train, y_train):
+    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=None)
+    scoring = ['accuracy',
+               'precision_micro',
+               'recall_micro',
+               'f1_micro']
+
+    scores = cross_validate(cf,
+                            x_train,
+                            y_train,
+                            scoring=scoring,
+                            cv=skf,
+                            return_train_score=False)
+    # scores = cross_val_score(cf, x_train, y_train, cv=skf, scoring='f1_micro')
+
+    output_metrics(scores, scoring)
+
+
+def output_metrics(scores, scoring):
+    for score in scoring:
+        print(score, ': ', np.mean(scores['test_' + score]))
+
+
 def main():
     response, query_count = get_elasticsearch_data()
     x_train, y_train, y_dict = format_elasticsearch_data(response, query_count)
 
-    skf = StratifiedKFold(n_splits=5, random_state=None, shuffle=True)
+    cf = create_cf('svm')
 
-    cf = GaussianNB()
-    scores = cross_val_score(cf, x_train, y_train, cv=skf, scoring='f1_micro')
-    print(scores)
+    predict(cf, x_train, y_train)
 
 
 main()
