@@ -29,15 +29,16 @@ def eval_artist(service, chart, artist):
 
     parameters_input = {}
     parameters_mllib = {}
-    parameters_output = {"best": 1,
+    parameters_output = {"best": 5,
                          "template": "{{#body}}{{#predictions}} "
                                      "{ \"index\": {\"_index\": \"images\", \"_type\": \"img\" } }\n "
                                      "{ \"uri\": \"{{uri}}\", "
-                                     "{{#classes}} "
                                      "\"chart\": \"" + chart + "\", "
-                                     "\"category\": \"{{cat}}\", "
+                                     "\"artist\": \"" + artist + "\", "
+                                     "\"categories\": [ {{#classes}} "
+                                     "{ \"category\": \"{{cat}}\", "
                                      "\"score\":{{prob}} } "
-                                     "{{/classes}}\n "
+                                     "{{^last}},{{/last}}{{/classes}} ] }\n "
                                      "{{/predictions}}{{/body}} \n",
                          "network": {"url": "host.docker.internal:9200/images/_bulk",
                                      "http_method": "POST"}}
