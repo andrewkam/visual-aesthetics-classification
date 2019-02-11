@@ -8,6 +8,7 @@ import json
 import urllib.request
 from urllib.error import HTTPError
 from lxml import html
+from mochart import gaon, oricon
 
 
 with open('config.json', 'r') as f:
@@ -20,17 +21,32 @@ network = pylast.LastFMNetwork(api_key=LASTFM_API_KEY,
                                api_secret=LASTFM_API_SECRET)
 
 
-def getChart(genre):
-    chart = billboard.ChartData(genre)
+def getChart(site, genre):
     artists = []
 
-    for song in chart:
-        # rank = song.rank
-        artist_name = re.sub('Featuring.*| [xX] .*| & .*', '', song.artist)
-        artist_name = artist_name.strip()
+    if site == 'billboard':
+        chart = billboard.ChartData(genre)
+        for song in chart:
+            artists.append(song.artist)
+    elif site == 'gaon':
+        ranking = gaon.week()
+        for rank in ranking:
+            artists.append(rank['artist'])
+    else:
+        print('Site must be billboard, gaon, or oricon')
+        exit()
 
-        artists.append(artist_name)
+    # for song in chart:
+    #     # rank = song.rank
+    #     artist_name = re.sub('Featuring.*| [xX] .*| & .*', '', song.artist)
+    #     artist_name = artist_name.strip()
 
+    #     artists.append(artist_name)
+
+    [re.sub('Featuring.*| [xX] .*| & .*', '', artist) for artist in artists]
+    map(str.strip, artists)
+
+    print(artists)
     return artists
 
 
@@ -38,16 +54,24 @@ def getImageUrls(artists):
     urls = []
 
     for artist_name in artists:
-        search = network.search_for_artist(artist_name)
-        results = search.get_next_page()
-        artist = results[0]
-        url_image = artist.get_url() + '/+images'
-        urls.append(url_image)
+        print(artist_name)
+        try:
+            search = network.search_for_artist(artist_name)
+            results = search.get_next_page()
+            if results:
+                artist = results[0]
+                url_image = artist.get_url() + '/+images'
+                urls.append(url_image)
+            else:
+                print(artist_name, 'no urls')
+        except Exception as e:
+            print(artist_name, 'Error code:', e.code)
+            continue
 
     return urls
 
 
-def getImages(genre, artists):
+def getImages(site, genre, artists):
     urls = getImageUrls(artists)
     url_base = 'https://lastfm-img2.akamaized.net/i/u/avatar300s/'
 
@@ -100,17 +124,19 @@ def getImages(genre, artists):
 def main():
     arg_count = len(sys.argv)
 
-    if arg_count == 2:
-        genre = sys.argv[1]
-        artists = getChart(genre)  # ie. 'pop-songs'
-    elif arg_count == 3:
-        genre = sys.argv[1]
-        artists = [sys.argv[2]]
+    if arg_count == 3:
+        site = sys.argv[1]
+        genre = sys.argv[2]
+        artists = getChart(site, genre)  # ie. 'pop-songs'
+    elif arg_count == 4:
+        site = sys.argv[1]
+        genre = sys.argv[2]
+        artists = [sys.argv[3]]
     else:
-        print('Usage: get_chart_images chart [artist]')
+        print('Usage: get_chart_images site chart [artist]')
         exit()
 
-    getImages(genre, artists)
+    getImages(site, genre, artists)
 
 
 main()
