@@ -1,8 +1,9 @@
+import sys
 import numpy as np
 import elasticsearch
 import elasticsearch_dsl
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.model_selection import StratifiedKFold, cross_val_score, cross_validate
+from sklearn.model_selection import StratifiedKFold, cross_validate, GridSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
@@ -65,35 +66,52 @@ def tokenize(x_cat, x_score):
 
 def create_cf(cf_name):
 
-    if cf_name == 'naive_bayes':
+    if cf_name == 'nb':
         cf = GaussianNB()
     elif cf_name == 'svm':
         cf = LinearSVC()
         cf.set_params(penalty='l2',
-                      loss='hinge',
-                      dual=True,
+                      loss='squared_hinge',
+                      dual=False,
                       C=1,
-                      max_iter=100000)
+                      max_iter=1000)
+    elif cf_name == 'dt':
+        cf = DecisionTreeClassifier()
+        cf.set_params(criterion='gini',
+                      max_depth=18,
+                      min_samples_split=50)
     else:
         exit()
 
     return cf
 
 
-def predict(cf, x_train, y_train):
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=None)
+def tune_params(cf, params, cv, x_data, y_data):
+    grid_clf = GridSearchCV(cf, params, scoring='f1_macro', cv=cv, refit=False)
+    grid_clf.fit(x_data, y_data)
+
+    print('Best Param: ', grid_clf.best_params_)
+
+    means = grid_clf.cv_results_['mean_test_score']
+    stds = grid_clf.cv_results_['std_test_score']
+
+    for mean, std, params in zip(means, stds, grid_clf.cv_results_['params']):
+        print("%0.3f (+/-%0.03f) for %r"
+              % (mean, std * 2, params))
+
+
+def predict(cf, cv, x_train, y_train):
     scoring = ['accuracy',
-               'precision_micro',
-               'recall_micro',
-               'f1_micro']
+               'precision_macro',
+               'recall_macro',
+               'f1_macro']
 
     scores = cross_validate(cf,
                             x_train,
                             y_train,
                             scoring=scoring,
-                            cv=skf,
+                            cv=cv,
                             return_train_score=False)
-    # scores = cross_val_score(cf, x_train, y_train, cv=skf, scoring='f1_micro')
 
     output_metrics(scores, scoring)
 
@@ -104,12 +122,29 @@ def output_metrics(scores, scoring):
 
 
 def main():
+    arg_count = len(sys.argv)
+
+    if arg_count == 2:
+        classifiers = ['nb', 'svm', 'dt']
+        if sys.argv[1] in classifiers:
+            cf = create_cf(sys.argv[1])
+        else:
+            print('Classifier must be nb, svm, or dt')
+    else:
+        print('Usage: predict_genre classifier')
+
     response, query_count = get_elasticsearch_data()
     x_train, y_train, y_dict = format_elasticsearch_data(response, query_count)
 
-    cf = create_cf('svm')
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=None)
 
-    predict(cf, x_train, y_train)
+    # params = {'criterion': ['gini', 'entropy'],
+    #           'max_depth': [6, 8, 10, 12, 14, 16, 18, 20],
+    #           'min_samples_split': [10, 20, 30, 40, 50]}
+
+    # tune_params(cf, params, cv, x_train, y_train)
+
+    predict(cf, cv, x_train, y_train)
 
 
 main()
