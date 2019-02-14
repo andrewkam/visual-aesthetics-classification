@@ -8,3 +8,5 @@ import*.txt
 *.pyc
 
 images/
+docs/.rbenv-gemsets
+docs/.ruby-version

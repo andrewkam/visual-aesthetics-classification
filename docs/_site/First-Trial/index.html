@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>First Trial – Andrew Kam – Music Technology Engineer</title>
+
+        <meta charset="utf-8" />
+    <meta content='text/html; charset=utf-8' http-equiv='Content-Type'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0'>
+
+    
+    <meta name="description" content="As a trial to see if my genre classification idea would even work, photos from the following four genres were retrieved:
+
+  Country (1,072 images, 40 artists)
+  R&amp;B/Hip-hop (1,305 images, 37 artists)
+  Rock (1,394 images, 36 artists)
+  K-pop (1,138 images, 74 artists)
+
+
+" />
+    <meta property="og:description" content="As a trial to see if my genre classification idea would even work, photos from the following four genres were retrieved:
+
+  Country (1,072 images, 40 artists)
+  R&amp;B/Hip-hop (1,305 images, 37 artists)
+  Rock (1,394 images, 36 artists)
+  K-pop (1,138 images, 74 artists)
+
+
+" />
+    
+    <meta name="author" content="Andrew Kam" />
+
+    
+    <meta property="og:title" content="First Trial" />
+    <meta property="twitter:title" content="First Trial" />
+    
+
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <link rel="stylesheet" type="text/css" href="/visual-aesthetics-classification/style.css" />
+    <link rel="alternate" type="application/rss+xml" title="Andrew Kam - Music Technology Engineer" href="/visual-aesthetics-classification/feed.xml" />
+
+    <!-- Created with Jekyll Now - http://github.com/barryclark/jekyll-now -->
+  </head>
+
+  <body>
+    <div class="wrapper-masthead">
+      <div class="container">
+        <header class="masthead clearfix">
+          <!-- <a href="/visual-aesthetics-classification/" class="site-avatar"><img src="" /></a> -->
+
+          <div class="site-info">
+            <h1 class="site-name"><a href="/visual-aesthetics-classification/">Andrew Kam</a></h1>
+            <p class="site-description">Music Technology Engineer</p>
+          </div>
+
+          <nav>
+            <a href="/visual-aesthetics-classification/">Blog</a>
+            <a href="/visual-aesthetics-classification/about">About</a>
+          </nav>
+        </header>
+      </div>
+    </div>
+
+    <div id="main" role="main" class="container">
+      <article class="post">
+  <h1>First Trial</h1>
+
+  <div class="entry">
+    <p>As a trial to see if my genre classification idea would even work, photos from the following four genres were retrieved:</p>
+<ul>
+  <li>Country (1,072 images, 40 artists)</li>
+  <li>R&amp;B/Hip-hop (1,305 images, 37 artists)</li>
+  <li>Rock (1,394 images, 36 artists)</li>
+  <li>K-pop (1,138 images, 74 artists)</li>
+</ul>
+
+<p>Artist lists for country, R&amp;B/hip-hop, and rock were pulled form Billboard charts Country Albums, R&amp;B Albums, Rock Albums. K-pop artists were retrieved from the Gaon Digital Chart. Images were resized to 300x300, and processed using the clothing image classification model found <a href="https://www.deepdetect.com/applications/model/">here</a>.</p>
+
+<p>After image detection, the following classifiers were run:</p>
+
+<h3 id="naive-bayes">Naive Bayes</h3>
+<p>Parameters: None</p>
+<ul>
+  <li>accuracy: 0.33469546176416365</li>
+  <li>precision_macro: 0.3761609587593987</li>
+  <li>recall_macro: 0.34189628734972566</li>
+  <li>f1_macro: 0.3131771098207531</li>
+</ul>
+
+<h3 id="svm">SVM</h3>
+<p>Parameters: penalty=’l2’, loss=’squared_hinge’, dual=False, C=1, max_iter=1000</p>
+<ul>
+  <li>accuracy: 0.41536640557843557</li>
+  <li>precision_macro: 0.41448550024974046</li>
+  <li>recall_macro: 0.4059822336174907</li>
+  <li>f1_macro: 0.4053436576137777</li>
+</ul>
+
+<h3 id="decision-tree">Decision Tree</h3>
+<p>Parameters: criterion=’gini’, max_depth=18, min_samples_split=50</p>
+<ul>
+  <li>accuracy: 0.3815432710722263</li>
+  <li>precision_macro: 0.4315133134688377</li>
+  <li>recall_macro: 0.36902721426276114</li>
+  <li>f1_macro: 0.34820470527426756</li>
+</ul>
+
+  </div>
+
+  <div class="date">
+    Written on February 13, 2019
+  </div>
+
+  
+</article>
+
+    </div>
+
+    <div class="wrapper-footer">
+      <div class="container">
+        <footer class="footer">
+          
+
+
+
+<a href="https://github.com/andrewkam"><i class="svg-icon github"></i></a>
+
+
+
+
+
+
+
+
+        </footer>
+      </div>
+    </div>
+
+    
+
+  </body>
+</html>
