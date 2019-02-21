@@ -22,11 +22,13 @@ network = pylast.LastFMNetwork(api_key=LASTFM_API_KEY,
                                api_secret=LASTFM_API_SECRET)
 
 
-def getChart(site, genre):
+def getChart(site, genre, date):
     artists = []
 
+    print(f'{genre} - {date}')
+
     if site == 'billboard':
-        chart = billboard.ChartData(genre)
+        chart = billboard.ChartData(genre, date=date)
         for song in chart:
             artists.append(song.artist)
     elif site == 'gaon':
@@ -121,16 +123,18 @@ def getImages(site, genre, artists):
 def main():
     arg_count = len(sys.argv)
 
-    if arg_count == 3:
+    if arg_count == 4:
         site = sys.argv[1]
         genre = sys.argv[2]
-        artists = getChart(site, genre)  # ie. 'pop-songs'
-    elif arg_count == 4:
+        date = sys.argv[3]
+        artists = getChart(site, genre, date)  # ie. 'pop-songs'
+    elif arg_count == 5:
         site = sys.argv[1]
         genre = sys.argv[2]
-        artists = [sys.argv[3]]
+        date = sys.argv[3]
+        artists = [sys.argv[4]]
     else:
-        print('Usage: get_chart_images site chart [artist]')
+        print('Usage: get_chart_images site chart date [artist]')
         exit()
 
     getImages(site, genre, artists)
