@@ -3,7 +3,7 @@ import numpy as np
 import elasticsearch
 import elasticsearch_dsl
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.model_selection import StratifiedKFold, cross_validate, GridSearchCV
+from sklearn.model_selection import KFold, StratifiedKFold, cross_validate, cross_val_score, train_test_split, GridSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
@@ -73,13 +73,12 @@ def create_cf(cf_name):
         cf.set_params(penalty='l2',
                       loss='squared_hinge',
                       dual=False,
-                      C=1,
-                      max_iter=1000)
+                      C=40)
     elif cf_name == 'dt':
         cf = DecisionTreeClassifier()
-        cf.set_params(criterion='gini',
-                      max_depth=18,
-                      min_samples_split=50)
+        cf.set_params(criterion='entropy',
+                      max_depth=180,
+                      min_samples_split=120)
     else:
         exit()
 
@@ -136,12 +135,11 @@ def main():
     response, query_count = get_elasticsearch_data()
     x_train, y_train, y_dict = format_elasticsearch_data(response, query_count)
 
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=None)
+    cv = KFold(n_splits=5, shuffle=True, random_state=None)
 
     # params = {'criterion': ['gini', 'entropy'],
-    #           'max_depth': [6, 8, 10, 12, 14, 16, 18, 20],
-    #           'min_samples_split': [10, 20, 30, 40, 50]}
-
+    #           'max_depth': [180, 200, 250],
+    #           'min_samples_split': [120, 140, 160]}
     # tune_params(cf, params, cv, x_train, y_train)
 
     predict(cf, cv, x_train, y_train)

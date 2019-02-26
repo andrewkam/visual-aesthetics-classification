@@ -7,9 +7,10 @@ import pylast
 import json
 import urllib.request
 import numpy as np
+from datetime import datetime
 from urllib.error import HTTPError
 from lxml import html
-from mochart import gaon, oricon
+from mochart import gaon, utils
 
 
 with open('config.json', 'r') as f:
@@ -32,7 +33,7 @@ def getChart(site, genre, date):
         for song in chart:
             artists.append(song.artist)
     elif site == 'gaon':
-        ranking = gaon.week()
+        ranking = gaon.week(day_time=datetime.strptime(date, '%Y-%m-%d'))
         for rank in ranking:
             artists.append(rank['artist'])
     else:
@@ -101,6 +102,7 @@ def getImages(site, genre, artists):
             artist_image_dir = image_dir + artist_name_dir
             if not os.path.exists(artist_image_dir):
                 os.mkdir(artist_image_dir)
+                print('NEW')
 
             for i, path in enumerate(results):
                 url_image = url_base + path[49:]  # + '.jpeg#' + path[49:]

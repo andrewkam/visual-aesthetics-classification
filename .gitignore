@@ -6,6 +6,7 @@ config.json
 import*.txt
 *.scssc
 *.pyc
+*.sh
 
 images/
 docs/.rbenv-gemsets
