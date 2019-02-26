@@ -2,11 +2,14 @@ import sys
 import numpy as np
 import elasticsearch
 import elasticsearch_dsl
+import itertools
+import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.model_selection import KFold, StratifiedKFold, cross_validate, cross_val_score, train_test_split, GridSearchCV
+from sklearn.model_selection import KFold, cross_validate, train_test_split, GridSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import confusion_matrix
 
 
 def get_elasticsearch_data():
@@ -42,7 +45,7 @@ def format_elasticsearch_data(response, query_count):
     y_label = np.array(y_label)
     label_dict, y_index = np.unique(y_label, return_inverse=True)
 
-    return x_train, y_index, label_dict
+    return x_train, y_index, label_dict, cat_count
 
 
 def tokenize(x_cat, x_score):
@@ -99,11 +102,13 @@ def tune_params(cf, params, cv, x_data, y_data):
               % (mean, std * 2, params))
 
 
-def predict(cf, cv, x_train, y_train):
+def predict_cross_valid(cf, x_train, y_train):
     scoring = ['accuracy',
                'precision_macro',
                'recall_macro',
                'f1_macro']
+
+    cv = KFold(n_splits=5, shuffle=True, random_state=None)
 
     scores = cross_validate(cf,
                             x_train,
@@ -115,9 +120,42 @@ def predict(cf, cv, x_train, y_train):
     output_metrics(scores, scoring)
 
 
+def predict_split(cf, x_data, y_data):
+    x_train, x_test, y_train, y_test = train_test_split(
+        x_data, y_data, test_size=0.25)
+
+    cf.fit(x_train, y_train)
+    y_pred = cf.predict(x_test)
+    print(y_pred)
+
+
 def output_metrics(scores, scoring):
     for score in scoring:
         print(score, ': ', np.mean(scores['test_' + score]))
+
+
+def plot_confusion_matrix(cmatrix, cat_count):
+    classes = range(cat_count)
+    plt.figure(figsize=(12, 12))
+    plt.imshow(cmatrix, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.title('Confusion Matrix')
+    plt.colorbar(shrink=0.77, pad=0.01)
+    plt.grid('off')
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    thresh = cmatrix.max() / 2.
+    for i, j in itertools.product(range(cmatrix.shape[0]),
+                                  range(cmatrix.shape[1])):
+        plt.text(j, i, cmatrix[i, j],
+                 horizontalalignment="center",
+                 verticalalignment="center",
+                 color="white" if cmatrix[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('Actual Label')
+    plt.xlabel('Predicted Label')
 
 
 def main():
@@ -133,16 +171,18 @@ def main():
         print('Usage: predict_genre classifier')
 
     response, query_count = get_elasticsearch_data()
-    x_train, y_train, y_dict = format_elasticsearch_data(response, query_count)
-
-    cv = KFold(n_splits=5, shuffle=True, random_state=None)
+    x_train, y_train, y_dict, cat_count = format_elasticsearch_data(
+        response, query_count)
 
     # params = {'criterion': ['gini', 'entropy'],
     #           'max_depth': [180, 200, 250],
     #           'min_samples_split': [120, 140, 160]}
     # tune_params(cf, params, cv, x_train, y_train)
 
-    predict(cf, cv, x_train, y_train)
+    # predict_cross_valid(cf, x_train, y_train)
+    predict_split(cf, x_train, y_train)
+
+    # cmatrix = confusion_matrix(y_test_classes, y_pred_classes)
 
 
 main()
