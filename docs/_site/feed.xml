@@ -1,4 +1,42 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.7.4">Jekyll</generator><link href="http://localhost:4000/visual-aesthetics-classification/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/visual-aesthetics-classification/" rel="alternate" type="text/html" /><updated>2019-02-14T13:02:03-05:00</updated><id>http://localhost:4000/visual-aesthetics-classification/feed.xml</id><title type="html">Andrew Kam</title><subtitle>Music Technology Engineer</subtitle><entry><title type="html">First Trial</title><link href="http://localhost:4000/visual-aesthetics-classification/First-Trial/" rel="alternate" type="text/html" title="First Trial" /><published>2019-02-13T00:00:00-05:00</published><updated>2019-02-13T00:00:00-05:00</updated><id>http://localhost:4000/visual-aesthetics-classification/First-Trial</id><content type="html" xml:base="http://localhost:4000/visual-aesthetics-classification/First-Trial/">&lt;p&gt;As a trial to see if my genre classification idea would even work, photos from the following four genres were retrieved:&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.7.4">Jekyll</generator><link href="http://localhost:4000/visual-aesthetics-classification/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/visual-aesthetics-classification/" rel="alternate" type="text/html" /><updated>2019-02-26T22:29:50-05:00</updated><id>http://localhost:4000/visual-aesthetics-classification/feed.xml</id><title type="html">Andrew Kam</title><subtitle>Music Technology Engineer</subtitle><entry><title type="html">Balancing the Dataset</title><link href="http://localhost:4000/visual-aesthetics-classification/Balancing-the-Dataset/" rel="alternate" type="text/html" title="Balancing the Dataset" /><published>2019-02-26T00:00:00-05:00</published><updated>2019-02-26T00:00:00-05:00</updated><id>http://localhost:4000/visual-aesthetics-classification/Balancing%20the%20Dataset</id><content type="html" xml:base="http://localhost:4000/visual-aesthetics-classification/Balancing-the-Dataset/">&lt;p&gt;More images of each genre were retrieved to see if this would positively affect the classification results. As well, the same number of images for each genre was retrieved in order to create a balanced dataset:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Country (2,000 images, 86 artists)&lt;/li&gt;
+  &lt;li&gt;R&amp;amp;B/Hip-hop (2,000 images, 69 artists)&lt;/li&gt;
+  &lt;li&gt;Rock (2,000 images, 60 artists)&lt;/li&gt;
+  &lt;li&gt;K-pop (2,000 images, 143 artists)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The same classifiers were run, producing the following results:&lt;/p&gt;
+
+&lt;h3 id=&quot;naive-bayes&quot;&gt;Naive Bayes&lt;/h3&gt;
+&lt;p&gt;Parameters: None&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;accuracy: 0.3665&lt;/li&gt;
+  &lt;li&gt;precision_macro: 0.41612945426404774&lt;/li&gt;
+  &lt;li&gt;recall_macro: 0.3662461439273913&lt;/li&gt;
+  &lt;li&gt;f1_macro: 0.3453081120705497&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;svm&quot;&gt;SVM&lt;/h3&gt;
+&lt;p&gt;Parameters: penalty=’l2’, loss=’squared_hinge’, dual=False, C=40, max_iter=1000&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;accuracy: 0.415625&lt;/li&gt;
+  &lt;li&gt;precision_macro: 0.4194762225283147&lt;/li&gt;
+  &lt;li&gt;recall_macro: 0.41595862064206857&lt;/li&gt;
+  &lt;li&gt;f1_macro: 0.41514156941272445&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;decision-tree&quot;&gt;Decision Tree&lt;/h3&gt;
+&lt;p&gt;Parameters: criterion=’entropy’, max_depth=180, min_samples_split=120&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;accuracy: 0.394375&lt;/li&gt;
+  &lt;li&gt;precision_macro: 0.395510021357171&lt;/li&gt;
+  &lt;li&gt;recall_macro: 0.39381256227398065&lt;/li&gt;
+  &lt;li&gt;f1_macro: 0.39351326650741103&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Comparing F1 scores with the previous results, naive bayes and decision tree performance increased by a few percent. However, SVM performance only increased by 1 percent, which was disappointing, as this classifier produced the best results. While creating a larger dataset helped, it did not improve performance as much as expected!&lt;/p&gt;</content><author><name></name></author><summary type="html">More images of each genre were retrieved to see if this would positively affect the classification results. As well, the same number of images for each genre was retrieved in order to create a balanced dataset:</summary></entry><entry><title type="html">First Trial</title><link href="http://localhost:4000/visual-aesthetics-classification/First-Trial/" rel="alternate" type="text/html" title="First Trial" /><published>2019-02-13T00:00:00-05:00</published><updated>2019-02-13T00:00:00-05:00</updated><id>http://localhost:4000/visual-aesthetics-classification/First-Trial</id><content type="html" xml:base="http://localhost:4000/visual-aesthetics-classification/First-Trial/">&lt;p&gt;As a trial to see if my genre classification idea would even work, photos from the following four genres were retrieved:&lt;/p&gt;
 &lt;ul&gt;
   &lt;li&gt;Country (1,072 images, 40 artists)&lt;/li&gt;
   &lt;li&gt;R&amp;amp;B/Hip-hop (1,305 images, 37 artists)&lt;/li&gt;
