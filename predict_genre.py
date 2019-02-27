@@ -4,12 +4,12 @@ import elasticsearch
 import elasticsearch_dsl
 import itertools
 import matplotlib.pyplot as plt
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.model_selection import KFold, cross_validate, train_test_split, GridSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 
 def get_elasticsearch_data():
@@ -45,13 +45,17 @@ def format_elasticsearch_data(response, query_count):
     y_label = np.array(y_label)
     label_dict, y_index = np.unique(y_label, return_inverse=True)
 
-    return x_train, y_index, label_dict, cat_count
+    return x_train, y_index, label_dict
 
 
 def tokenize(x_cat, x_score):
     cv = CountVectorizer(input='content',
                          lowercase=False,
                          tokenizer=lambda text: text)
+
+    # cv = TfidfVectorizer(input='content',
+    #                      lowercase=False,
+    #                      tokenizer=lambda text: text)
 
     v_train = cv.fit_transform(x_cat)
     x_train = v_train.astype('float64')
@@ -120,13 +124,18 @@ def predict_cross_valid(cf, x_train, y_train):
     output_metrics(scores, scoring)
 
 
-def predict_split(cf, x_data, y_data):
+def predict_split(cf, x_data, y_data, y_dict):
     x_train, x_test, y_train, y_test = train_test_split(
         x_data, y_data, test_size=0.25)
 
     cf.fit(x_train, y_train)
     y_pred = cf.predict(x_test)
-    print(y_pred)
+
+    score = accuracy_score(y_test, y_pred)
+    print(score)
+
+    cmatrix = confusion_matrix(y_test, y_pred)
+    plot_confusion_matrix(cmatrix, y_dict)
 
 
 def output_metrics(scores, scoring):
@@ -134,13 +143,14 @@ def output_metrics(scores, scoring):
         print(score, ': ', np.mean(scores['test_' + score]))
 
 
-def plot_confusion_matrix(cmatrix, cat_count):
-    classes = range(cat_count)
-    plt.figure(figsize=(12, 12))
+def plot_confusion_matrix(cmatrix, y_dict):
+    classes = range(len(y_dict))
+    classes = y_dict
+    plt.figure(figsize=(10, 10))
     plt.imshow(cmatrix, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title('Confusion Matrix')
-    plt.colorbar(shrink=0.77, pad=0.01)
-    plt.grid('off')
+    plt.colorbar(shrink=0.75, pad=0.01)
+    plt.grid(False)
     tick_marks = np.arange(len(classes))
     plt.xticks(tick_marks, classes, rotation=45)
     plt.yticks(tick_marks, classes)
@@ -156,6 +166,7 @@ def plot_confusion_matrix(cmatrix, cat_count):
     plt.tight_layout()
     plt.ylabel('Actual Label')
     plt.xlabel('Predicted Label')
+    plt.show()
 
 
 def main():
@@ -171,7 +182,7 @@ def main():
         print('Usage: predict_genre classifier')
 
     response, query_count = get_elasticsearch_data()
-    x_train, y_train, y_dict, cat_count = format_elasticsearch_data(
+    x_data, y_data, y_dict = format_elasticsearch_data(
         response, query_count)
 
     # params = {'criterion': ['gini', 'entropy'],
@@ -179,10 +190,8 @@ def main():
     #           'min_samples_split': [120, 140, 160]}
     # tune_params(cf, params, cv, x_train, y_train)
 
-    # predict_cross_valid(cf, x_train, y_train)
-    predict_split(cf, x_train, y_train)
-
-    # cmatrix = confusion_matrix(y_test_classes, y_pred_classes)
+    predict_cross_valid(cf, x_data, y_data)
+    # predict_split(cf, x_data, y_data, y_dict)
 
 
 main()
