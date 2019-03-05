@@ -9,13 +9,13 @@ service = sys.argv[1]
 
 MODEL_REPO = config['REPO'][service]['PATH']
 nclasses = config['REPO'][service]['CLASS_COUNT']
-height = width = 224
+height = width = config['REPO'][service]['IMAGE_SIZE']
 
 # setting up DD client
 host = 'localhost'
 sname = config['REPO'][service]['NAME']
 description = config['REPO'][service]['DESCRIPTION']
-mllib = 'caffe'
+mllib = config['REPO'][service]['LIBRARY']
 dd = DD(host)
 dd.set_return_format(dd.RETURN_PYTHON)
 

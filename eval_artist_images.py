@@ -11,7 +11,7 @@ with open('config.json', 'r') as f:
 DD_PATH = config['IMAGEDIR']['DEEPDETECT']
 LOCAL_PATH = config['IMAGEDIR']['LOCAL']
 IMG_COUNT = 2000
-IMG_BATCH = 50
+IMG_BATCH = 5
 
 
 def predict(service, chart, image_filenames):
@@ -23,9 +23,9 @@ def predict(service, chart, image_filenames):
 
     parameters_input = {}
     parameters_mllib = {}
-    parameters_output = {"best": 5,
+    parameters_output = {"best": 10,
                          "template": "{{#body}}{{#predictions}} "
-                                     "{ \"index\": {\"_index\": \"images\", \"_type\": \"img\" } }\n "
+                                     "{ \"index\": {\"_index\": \"objects-10\", \"_type\": \"img\" } }\n "
                                      "{ \"uri\": \"{{uri}}\", "
                                      "\"chart\": \"" + chart + "\", "
                                      # "\"artist\": \"" + artist + "\", "
@@ -34,7 +34,7 @@ def predict(service, chart, image_filenames):
                                      "\"score\":{{prob}} } "
                                      "{{^last}},{{/last}}{{/classes}} ] }\n "
                                      "{{/predictions}}{{/body}} \n",
-                         "network": {"url": "host.docker.internal:9200/images/_bulk",
+                         "network": {"url": "host.docker.internal:9200/objects-10/_bulk",
                                      "http_method": "POST"}}
 
     predict = dd.post_predict(sname,
@@ -54,7 +54,7 @@ def eval_artist(service, chart, artist):
         if isfile(join(local_dir, file)):
             image_filenames.append(join(dd_dir, file))
 
-    predict(service, chart, image_filenames[:3])
+    predict(service, chart, image_filenames)
 
 
 def eval_chart(service, chart):
@@ -74,6 +74,8 @@ def eval_chart(service, chart):
 
     shuffle(image_filenames)
 
+    file = open('detect_objects.log', 'w')
+
     for batch_no, index_start in enumerate(range(0, IMG_COUNT, IMG_BATCH)):
         print(f'{batch_no+1}/{int(IMG_COUNT/IMG_BATCH)}')
         index_stop = index_start + IMG_BATCH
@@ -81,6 +83,15 @@ def eval_chart(service, chart):
             index_stop = IMG_COUNT
 
         predict(service, chart, image_filenames[index_start:index_stop])
+
+        for image in image_filenames[index_start:index_stop]:
+            file.write(image + '\n')
+
+    file.write('\nLEFTOVER:\n')
+    for image in image_filenames[IMG_COUNT:]:
+        file.write(image + '\n')
+
+    file.close()
 
 
 def main():
