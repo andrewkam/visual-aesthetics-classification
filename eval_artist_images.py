@@ -61,7 +61,7 @@ def eval_chart(service, chart):
     chart_dir = join(LOCAL_PATH, chart)
 
     image_filenames = []
-    artists = sorted(listdir(chart_dir))
+    artists = sorted([f for f in listdir(chart_dir) if not f.startswith('.')])
 
     for artist in artists:
         if isdir(join(chart_dir, artist)):

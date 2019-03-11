@@ -4,6 +4,7 @@ config.json
 *.sublime-project
 *.sublime-workspace
 import*.txt
+*.log
 *.scssc
 *.pyc
 *.sh
