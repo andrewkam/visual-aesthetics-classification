@@ -7,10 +7,10 @@ import itertools
 import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.model_selection import KFold, cross_validate, train_test_split, GridSearchCV
-from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 
 with open('config.json', 'r') as f:
     config = json.load(f)
@@ -73,24 +73,24 @@ def remove_stop_items(doc):
 def tokenize(x_cat, x_score):
     # stop_items = ['ensemble', 'clothing, article of clothing, vesture, wear, wearable, habiliment']
 
-    # cv = CountVectorizer(input='content',
-    #                      lowercase=False,
-    #                      tokenizer=lambda text: text)
-
-    cv = TfidfVectorizer(input='content',
+    cv = CountVectorizer(input='content',
                          lowercase=False,
                          tokenizer=lambda text: text)
 
-    v_train = cv.fit_transform(x_cat)
+    # cv = TfidfVectorizer(input='content',
+    #                      lowercase=False,
+    #                      binary=True,
+    #                      tokenizer=lambda text: text)
 
-    print(v_train * 10.0)
+    v_train = cv.fit_transform(x_cat)
 
     x_train = v_train.astype('float64')
 
     # Scores as features
     # feature_names = cv.get_feature_names()
     # for img, (cat_img, score_img) in enumerate(zip(x_cat, x_score)):
-    #     img_dict = dict(zip(cat_img, score_img))
+    #     score_sum = sum(score_img)
+    #     img_dict = dict(zip(cat_img, score_img/score_sum))
     #     for cat in cat_img:
     #         cat_index = feature_names.index(cat)
     #         x_train[img, cat_index] = x_train[img, cat_index] * img_dict[cat]
@@ -103,7 +103,8 @@ def tokenize(x_cat, x_score):
 def create_cf(cf_name):
 
     if cf_name == 'nb':
-        cf = GaussianNB()
+        # cf = GaussianNB()
+        cf = BernoulliNB()
     elif cf_name == 'svm':
         cf = LinearSVC()
         cf.set_params(penalty='l2',
@@ -162,7 +163,7 @@ def predict_split(cf, x_data, y_data, y_dict):
     cf.fit(x_train, y_train)
     y_pred = cf.predict(x_test)
 
-    score = accuracy_score(y_test, y_pred)
+    score = f1_score(y_test, y_pred, average='macro')
     print(score)
 
     cmatrix = confusion_matrix(y_test, y_pred)
@@ -175,15 +176,24 @@ def output_metrics(scores, scoring):
 
 
 def plot_confusion_matrix(cmatrix, y_dict):
-    classes = range(len(y_dict))
-    classes = y_dict
-    plt.figure(figsize=(10, 10))
+    matrix_labels = {
+        'country-albums': 'Country',
+        'r-b-hip-hop-albums': 'R&B/Hip-Hop',
+        'rock-albums': 'Rock',
+        'k-pop': 'K-Pop'
+    }
+
+    classes = []
+    for chart in y_dict:
+        classes.append(matrix_labels[chart])
+
+    plt.figure(figsize=(6, 6))
     plt.imshow(cmatrix, interpolation='nearest', cmap=plt.cm.Blues)
-    plt.title('Confusion Matrix')
+    plt.title('Actual vs Predicted Genres', fontweight='bold')
     plt.colorbar(shrink=0.75, pad=0.01)
     plt.grid(False)
     tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
+    plt.xticks(tick_marks, classes)
     plt.yticks(tick_marks, classes)
 
     thresh = cmatrix.max() / 2.
@@ -195,8 +205,8 @@ def plot_confusion_matrix(cmatrix, y_dict):
                  color="white" if cmatrix[i, j] > thresh else "black")
 
     plt.tight_layout()
-    plt.ylabel('Actual Label')
-    plt.xlabel('Predicted Label')
+    plt.ylabel('Actual Genre', fontweight='bold')
+    plt.xlabel('Predicted Genre', fontweight='bold')
     plt.show()
 
 
@@ -227,8 +237,8 @@ def main():
     #           'min_samples_split': [10, 20, 30, 40, 50]}
     # tune_params(cf, params, x_data, y_data)
 
-    predict_cross_valid(cf, x_data, y_data)
-    # predict_split(cf, x_data, y_data, y_dict)
+    # predict_cross_valid(cf, x_data, y_data)
+    predict_split(cf, x_data, y_data, y_dict)
 
 
 main()
