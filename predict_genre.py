@@ -257,7 +257,7 @@ def visualize_scatter(data_2d, label_ids, y_dict, figsize=(10, 10)):
                     marker='o',
                     # color=plt.cm.Set1(label_id / float(nb_classes)),
                     linewidth='1',
-                    alpha=0.8,
+                    alpha=0.6,
                     label=classes[label_id])
     plt.legend(loc='best')
     plt.tight_layout()
@@ -275,7 +275,7 @@ def calc_tsne(x_data, y_data, y_dict):
     # pca_result = pca.fit_transform(x_data)
     x_reduced = TruncatedSVD(n_components=50, random_state=0).fit_transform(x_data)
 
-    tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=1000)
+    tsne = TSNE(n_components=2, verbose=1, learning_rate=200, perplexity=50, n_iter=2000)
     tsne_result = tsne.fit_transform(x_reduced[:item_count])
     tsne_result_scaled = StandardScaler().fit_transform(tsne_result)
     visualize_scatter(tsne_result_scaled, y_data[:item_count], y_dict)
