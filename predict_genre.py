@@ -1,5 +1,6 @@
 import sys
 import json
+import random
 import numpy as np
 import elasticsearch
 import elasticsearch_dsl
@@ -10,7 +11,10 @@ from sklearn.model_selection import KFold, cross_validate, train_test_split, Gri
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
+from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
+from sklearn.manifold import TSNE
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA, TruncatedSVD
 
 with open('config.json', 'r') as f:
     config = json.load(f)
@@ -63,7 +67,13 @@ def format_elasticsearch_data(response, query_count):
 
 
 def remove_stop_items(doc):
-    stop_items = ['ensemble', 'clothing, article of clothing, vesture, wear, wearable, habiliment']
+    stop_items = [#'ensemble',
+                  'clothing, article of clothing, vesture, wear, wearable, habiliment',
+                  # 'black',
+                  # 'street clothes',
+                  # 'man&apos;s clothing',
+                  # 'garment'
+                  ]
     for item in stop_items:
         doc = list(filter(lambda x: x != item, doc))
 
@@ -71,10 +81,11 @@ def remove_stop_items(doc):
 
 
 def tokenize(x_cat, x_score):
-    # stop_items = ['ensemble', 'clothing, article of clothing, vesture, wear, wearable, habiliment']
+    # stop_items = frozenset(['ensemble', 'clothing, article of clothing, vesture, wear, wearable, habiliment'])
 
     cv = CountVectorizer(input='content',
                          lowercase=False,
+                         preprocessor=remove_stop_items,
                          tokenizer=lambda text: text)
 
     # cv = TfidfVectorizer(input='content',
@@ -82,7 +93,11 @@ def tokenize(x_cat, x_score):
     #                      binary=True,
     #                      tokenizer=lambda text: text)
 
+    # print(x_cat[0])
+
     v_train = cv.fit_transform(x_cat)
+
+    # print(v_train[0])
 
     x_train = v_train.astype('float64')
 
@@ -144,7 +159,7 @@ def predict_cross_valid(cf, x_train, y_train):
                'recall_macro',
                'f1_macro']
 
-    cv = KFold(n_splits=5, shuffle=True, random_state=None)
+    cv = KFold(n_splits=8, shuffle=True, random_state=None)
 
     scores = cross_validate(cf,
                             x_train,
@@ -158,13 +173,15 @@ def predict_cross_valid(cf, x_train, y_train):
 
 def predict_split(cf, x_data, y_data, y_dict):
     x_train, x_test, y_train, y_test = train_test_split(
-        x_data, y_data, test_size=0.25)
+        x_data, y_data, test_size=0.15)
 
     cf.fit(x_train, y_train)
     y_pred = cf.predict(x_test)
 
-    score = f1_score(y_test, y_pred, average='macro')
+    # score = f1_score(y_test, y_pred, average='macro')
+    score = accuracy_score(y_test, y_pred)
     print(score)
+    print(classification_report(y_test, y_pred, target_names=y_dict, digits=3))
 
     cmatrix = confusion_matrix(y_test, y_pred)
     plot_confusion_matrix(cmatrix, y_dict)
@@ -175,7 +192,7 @@ def output_metrics(scores, scoring):
         print(score, ': ', round(np.mean(scores['test_' + score]), 3))
 
 
-def plot_confusion_matrix(cmatrix, y_dict):
+def format_labels(y_dict):
     matrix_labels = {
         'country-albums': 'Country',
         'r-b-hip-hop-albums': 'R&B/Hip-Hop',
@@ -186,6 +203,22 @@ def plot_confusion_matrix(cmatrix, y_dict):
     classes = []
     for chart in y_dict:
         classes.append(matrix_labels[chart])
+
+    return classes
+
+
+def plot_confusion_matrix(cmatrix, y_dict):
+    # matrix_labels = {
+    #     'country-albums': 'Country',
+    #     'r-b-hip-hop-albums': 'R&B/Hip-Hop',
+    #     'rock-albums': 'Rock',
+    #     'k-pop': 'K-Pop'
+    # }
+
+    # classes = []
+    # for chart in y_dict:
+    #     classes.append(matrix_labels[chart])
+    classes = format_labels(y_dict)
 
     plt.figure(figsize=(6, 6))
     plt.imshow(cmatrix, interpolation='nearest', cmap=plt.cm.Blues)
@@ -210,14 +243,53 @@ def plot_confusion_matrix(cmatrix, y_dict):
     plt.show()
 
 
+def visualize_scatter(data_2d, label_ids, y_dict, figsize=(10, 10)):
+    classes = format_labels(y_dict)
+
+    plt.figure(figsize=figsize)
+    plt.grid()
+
+    # nb_classes = len(np.unique(label_ids))
+
+    for label_id in np.unique(label_ids):
+        plt.scatter(data_2d[np.where(label_ids == label_id), 0],
+                    data_2d[np.where(label_ids == label_id), 1],
+                    marker='o',
+                    # color=plt.cm.Set1(label_id / float(nb_classes)),
+                    linewidth='1',
+                    alpha=0.8,
+                    label=classes[label_id])
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.show()
+
+
+def calc_tsne(x_data, y_data, y_dict):
+    item_count = 8000
+
+    xy_data = list(zip(x_data, y_data))
+    random.shuffle(xy_data)
+    x_data, y_data = zip(*xy_data)
+
+    # pca = PCA()
+    # pca_result = pca.fit_transform(x_data)
+    x_reduced = TruncatedSVD(n_components=50, random_state=0).fit_transform(x_data)
+
+    tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=1000)
+    tsne_result = tsne.fit_transform(x_reduced[:item_count])
+    tsne_result_scaled = StandardScaler().fit_transform(tsne_result)
+    visualize_scatter(tsne_result_scaled, y_data[:item_count], y_dict)
+
+
 def main():
     arg_count = len(sys.argv)
 
     if arg_count == 3:
-        classifiers = ['nb', 'svm', 'dt']
+        classifiers = ['nb', 'svm', 'dt', 'tsne']
         if sys.argv[2] in classifiers:
             service = sys.argv[1]
-            cf = create_cf(sys.argv[2])
+            if sys.argv[2] != 'tsne':
+                cf = create_cf(sys.argv[2])
         else:
             print('Classifier must be nb, svm, or dt')
     else:
@@ -237,8 +309,17 @@ def main():
     #           'min_samples_split': [10, 20, 30, 40, 50]}
     # tune_params(cf, params, x_data, y_data)
 
-    # predict_cross_valid(cf, x_data, y_data)
-    predict_split(cf, x_data, y_data, y_dict)
+    # params = {'penalty': ['l2'],
+    #           'loss': ['hinge'],
+    #           'dual': [True],
+    #           'C': [0.0001, 0.001, 0.01, 0.1, 1, 5, 10, 20]}
+    # tune_params(cf, params, x_data, y_data)
+
+    if sys.argv[2] != 'tsne':
+        predict_cross_valid(cf, x_data, y_data)
+        predict_split(cf, x_data, y_data, y_dict)
+    else:
+        calc_tsne(x_data, y_data, y_dict)
 
 
 main()
