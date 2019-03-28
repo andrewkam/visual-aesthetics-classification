@@ -1,11 +1,13 @@
 import sys
 import json
 import random
+import cv2
 import numpy as np
 import elasticsearch
 import elasticsearch_dsl
 import itertools
 import matplotlib.pyplot as plt
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.model_selection import KFold, cross_validate, train_test_split, GridSearchCV
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
@@ -28,7 +30,8 @@ def get_elasticsearch_data(service):
                                        doc_type='img')
     request = request.source(['categories.category',
                               'categories.score',
-                              'chart'])
+                              'chart',
+                              'uri'])
 
     # request = request.query('match', chart='(r-b-hip-hop) OR (k-pop)')
 
@@ -45,12 +48,14 @@ def format_elasticsearch_data(response, query_count):
     x_cat = np.zeros((query_count, cat_count), dtype=object)
     x_score = np.zeros((query_count, cat_count), dtype=object)
     y_label = np.zeros((query_count, 1), dtype=object)
+    image_paths = np.zeros((query_count, 1), dtype=object)
 
     for i, img in enumerate(response):
         for j, item in enumerate(img.categories):
             x_cat[i, j] = item.category
             x_score[i, j] = item.score
             y_label[i] = [img.chart]
+            image_paths[i] = [img.uri]
 
         # for manual category count
         # for j in range(0, cat_count):
@@ -63,7 +68,7 @@ def format_elasticsearch_data(response, query_count):
     y_label = np.array(y_label)
     label_dict, y_index = np.unique(y_label, return_inverse=True)
 
-    return x_train, y_index, label_dict
+    return x_train, y_index, label_dict, image_paths
 
 
 def remove_stop_items(doc):
@@ -81,8 +86,6 @@ def remove_stop_items(doc):
 
 
 def tokenize(x_cat, x_score):
-    # stop_items = frozenset(['ensemble', 'clothing, article of clothing, vesture, wear, wearable, habiliment'])
-
     cv = CountVectorizer(input='content',
                          lowercase=False,
                          preprocessor=remove_stop_items,
@@ -93,11 +96,7 @@ def tokenize(x_cat, x_score):
     #                      binary=True,
     #                      tokenizer=lambda text: text)
 
-    # print(x_cat[0])
-
     v_train = cv.fit_transform(x_cat)
-
-    # print(v_train[0])
 
     x_train = v_train.astype('float64')
 
@@ -264,12 +263,37 @@ def visualize_scatter(data_2d, label_ids, y_dict, figsize=(10, 10)):
     plt.show()
 
 
-def calc_tsne(x_data, y_data, y_dict):
-    item_count = 8000
+def visualize_scatter_with_images(X_2d_data, image_paths, figsize=(15, 15), image_zoom=1):
 
-    xy_data = list(zip(x_data, y_data))
+    images = []
+
+    for image_path in image_paths:
+        image_path = image_path[0].replace(config['IMAGEDIR']['DEEPDETECT'], config['IMAGEDIR']['LOCAL'])
+        image_path = image_path.replace('&apos;', '\'')
+        image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = cv2.resize(image, (100, 100))
+        images.append(image)
+
+    fig, ax = plt.subplots(figsize=figsize)
+    artists = []
+    for xy, i in zip(X_2d_data, images):
+        x0, y0 = xy
+        img = OffsetImage(i, zoom=image_zoom)
+        ab = AnnotationBbox(img, (x0, y0), xycoords='data', frameon=False)
+        artists.append(ax.add_artist(ab))
+    ax.update_datalim(X_2d_data)
+    ax.autoscale()
+    plt.tight_layout()
+    plt.show()
+
+
+def calc_tsne(x_data, y_data, y_dict, image_paths):
+    item_count = 2000
+
+    xy_data = list(zip(x_data, y_data, image_paths))
     random.shuffle(xy_data)
-    x_data, y_data = zip(*xy_data)
+    x_data, y_data, image_paths = zip(*xy_data)
 
     # pca = PCA()
     # pca_result = pca.fit_transform(x_data)
@@ -278,7 +302,9 @@ def calc_tsne(x_data, y_data, y_dict):
     tsne = TSNE(n_components=2, verbose=1, learning_rate=200, perplexity=50, n_iter=2000)
     tsne_result = tsne.fit_transform(x_reduced[:item_count])
     tsne_result_scaled = StandardScaler().fit_transform(tsne_result)
+
     visualize_scatter(tsne_result_scaled, y_data[:item_count], y_dict)
+    visualize_scatter_with_images(tsne_result_scaled, image_paths[:item_count])
 
 
 def main():
@@ -296,7 +322,7 @@ def main():
         print('Usage: predict_genre service classifier')
 
     response, query_count = get_elasticsearch_data(service)
-    x_data, y_data, y_dict = format_elasticsearch_data(
+    x_data, y_data, y_dict, image_paths = format_elasticsearch_data(
         response, query_count)
 
     # params = {'criterion': ['gini', 'entropy'],
@@ -319,7 +345,7 @@ def main():
         predict_cross_valid(cf, x_data, y_data)
         predict_split(cf, x_data, y_data, y_dict)
     else:
-        calc_tsne(x_data, y_data, y_dict)
+        calc_tsne(x_data, y_data, y_dict, image_paths)
 
 
 main()
