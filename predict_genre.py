@@ -172,14 +172,14 @@ def predict_cross_valid(cf, x_train, y_train):
 
 def predict_split(cf, x_data, y_data, y_dict):
     x_train, x_test, y_train, y_test = train_test_split(
-        x_data, y_data, test_size=0.15)
+        x_data, y_data, test_size=0.25)
 
     cf.fit(x_train, y_train)
     y_pred = cf.predict(x_test)
 
     # score = f1_score(y_test, y_pred, average='macro')
-    score = accuracy_score(y_test, y_pred)
-    print(score)
+    # score = accuracy_score(y_test, y_pred)
+    # print(score)
     print(classification_report(y_test, y_pred, target_names=y_dict, digits=3))
 
     cmatrix = confusion_matrix(y_test, y_pred)
@@ -207,16 +207,6 @@ def format_labels(y_dict):
 
 
 def plot_confusion_matrix(cmatrix, y_dict):
-    # matrix_labels = {
-    #     'country-albums': 'Country',
-    #     'r-b-hip-hop-albums': 'R&B/Hip-Hop',
-    #     'rock-albums': 'Rock',
-    #     'k-pop': 'K-Pop'
-    # }
-
-    # classes = []
-    # for chart in y_dict:
-    #     classes.append(matrix_labels[chart])
     classes = format_labels(y_dict)
 
     plt.figure(figsize=(6, 6))
@@ -244,21 +234,24 @@ def plot_confusion_matrix(cmatrix, y_dict):
 
 def visualize_scatter(data_2d, label_ids, y_dict, figsize=(10, 10)):
     classes = format_labels(y_dict)
+    markers = ['o', 's', '^', 'P']
 
     plt.figure(figsize=figsize)
     plt.grid()
 
     # nb_classes = len(np.unique(label_ids))
 
-    for label_id in np.unique(label_ids):
+    for i, label_id in enumerate(np.unique(label_ids)):
         plt.scatter(data_2d[np.where(label_ids == label_id), 0],
                     data_2d[np.where(label_ids == label_id), 1],
                     marker='o',
+                    # marker=markers[i],
                     # color=plt.cm.Set1(label_id / float(nb_classes)),
                     linewidth='1',
+                    # s=50,
                     alpha=0.6,
                     label=classes[label_id])
-    plt.legend(loc='best')
+    plt.legend(loc='best', fontsize='x-large')
     plt.tight_layout()
     plt.show()
 
@@ -289,7 +282,7 @@ def visualize_scatter_with_images(X_2d_data, image_paths, figsize=(15, 15), imag
 
 
 def calc_tsne(x_data, y_data, y_dict, image_paths):
-    item_count = 2000
+    item_count = 8000
 
     xy_data = list(zip(x_data, y_data, image_paths))
     random.shuffle(xy_data)
@@ -304,7 +297,7 @@ def calc_tsne(x_data, y_data, y_dict, image_paths):
     tsne_result_scaled = StandardScaler().fit_transform(tsne_result)
 
     visualize_scatter(tsne_result_scaled, y_data[:item_count], y_dict)
-    visualize_scatter_with_images(tsne_result_scaled, image_paths[:item_count])
+    # visualize_scatter_with_images(tsne_result_scaled, image_paths[:item_count])
 
 
 def main():
@@ -342,7 +335,7 @@ def main():
     # tune_params(cf, params, x_data, y_data)
 
     if sys.argv[2] != 'tsne':
-        predict_cross_valid(cf, x_data, y_data)
+        # predict_cross_valid(cf, x_data, y_data)
         predict_split(cf, x_data, y_data, y_dict)
     else:
         calc_tsne(x_data, y_data, y_dict, image_paths)
