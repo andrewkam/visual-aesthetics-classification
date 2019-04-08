@@ -188,7 +188,10 @@ def predict_split(cf, x_data, y_data, y_dict):
 
 def output_metrics(scores, scoring):
     for score in scoring:
-        print(score, ': ', round(np.mean(scores['test_' + score]), 3))
+        print('%s: %0.3f (+/-%0.3f)' %
+              (score,
+               scores['test_' + score].mean(),
+               scores['test_' + score].std()))
 
 
 def format_labels(y_dict):
@@ -335,8 +338,8 @@ def main():
     # tune_params(cf, params, x_data, y_data)
 
     if sys.argv[2] != 'tsne':
-        # predict_cross_valid(cf, x_data, y_data)
-        predict_split(cf, x_data, y_data, y_dict)
+        predict_cross_valid(cf, x_data, y_data)
+        # predict_split(cf, x_data, y_data, y_dict)
     else:
         calc_tsne(x_data, y_data, y_dict, image_paths)
 
